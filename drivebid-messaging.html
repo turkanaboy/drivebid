@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DriveBid — Messaging</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #16140F;
+    --ink-light: #46443C;
+    --ink-muted: #8C8A80;
+    --cream: #F7F3EC;
+    --cream-dark: #EDE8DF;
+    --white: #FFFFFF;
+    --accent: #C84B2F;
+    --accent-light: #F5EAE6;
+    --accent-mid: #E07055;
+    --success: #276648;
+    --success-light: #E6F2EC;
+    --warning: #96540E;
+    --warning-light: #FEF3E2;
+    --blue: #1A4A80;
+    --blue-light: #E6EFF8;
+    --border: rgba(22,20,15,0.1);
+    --border-med: rgba(22,20,15,0.18);
+    --r: 10px;
+    --r-sm: 6px;
+    --r-lg: 16px;
+    --shadow-sm: 0 1px 6px rgba(22,20,15,0.07);
+    --shadow: 0 3px 18px rgba(22,20,15,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    height: 100vh;
+    overflow: hidden;
+    font-size: 14px;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    height: 52px; background: var(--ink);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; flex-shrink: 0;
+  }
+  .logo { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--cream); }
+  .logo span { color: var(--accent-mid); }
+  .view-toggle { display: flex; gap: 4px; }
+  .vt-btn {
+    padding: 5px 16px; border-radius: 20px; border: none;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+    background: transparent; color: rgba(247,243,236,0.5);
+  }
+  .vt-btn.active { background: var(--cream); color: var(--ink); }
+  .vt-btn:hover:not(.active) { color: var(--cream); }
+
+  /* MAIN LAYOUT */
+  .app { display: flex; height: calc(100vh - 52px); }
+
+  /* THREAD LIST */
+  .thread-list {
+    width: 300px; flex-shrink: 0;
+    background: var(--white);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .tl-header {
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .tl-header h2 { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+  .tl-search {
+    width: 100%; padding: 8px 12px;
+    border: 1.5px solid var(--border-med);
+    border-radius: var(--r-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: var(--ink);
+    background: var(--cream); outline: none;
+  }
+  .tl-search:focus { border-color: var(--accent); }
+  .tl-body { flex: 1; overflow-y: auto; }
+
+  .thread-item {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.12s;
+    position: relative;
+  }
+  .thread-item:hover { background: var(--cream); }
+  .thread-item.active { background: var(--accent-light); border-right: 3px solid var(--accent); }
+  .ti-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px; }
+  .ti-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .ti-time { font-size: 11px; color: var(--ink-muted); flex-shrink: 0; margin-left: 8px; }
+  .ti-vehicle { font-size: 12px; color: var(--accent); font-weight: 500; margin-bottom: 3px; }
+  .ti-preview { font-size: 12px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+  .ti-unread {
+    position: absolute; top: 14px; right: 18px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+  }
+  .ti-status {
+    display: inline-block; margin-top: 6px;
+    padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+  }
+  .ti-status.new { background: var(--warning-light); color: var(--warning); }
+  .ti-status.active-deal { background: var(--blue-light); color: var(--blue); }
+  .ti-status.closed { background: var(--success-light); color: var(--success); }
+
+  /* MESSAGE PANE */
+  .msg-pane {
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden; background: var(--cream);
+  }
+
+  /* DEAL HEADER */
+  .deal-header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    flex-shrink: 0;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px;
+  }
+  .dh-left { flex: 1; }
+  .dh-names { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+  .dh-vehicle { font-size: 13px; color: var(--accent); font-weight: 500; margin-bottom: 6px; }
+  .dh-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .dh-chip {
+    padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    background: var(--cream-dark); color: var(--ink-muted);
+  }
+  .dh-chip.accent { background: var(--accent-light); color: var(--accent); }
+  .dh-chip.success { background: var(--success-light); color: var(--success); }
+  .dh-right { display: flex; gap: 8px; flex-shrink: 0; align-items: flex-start; }
+  .hdr-btn {
+    padding: 7px 14px; border-radius: var(--r-sm);
+    border: 1.5px solid var(--border-med);
+    background: transparent; font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500; cursor: pointer; color: var(--ink-light);
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .hdr-btn:hover { background: var(--cream-dark); }
+  .hdr-btn.primary { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+  .hdr-btn.primary:hover { background: var(--accent); border-color: var(--accent); }
+
+  /* OFFER SUMMARY BANNER */
+  .offer-banner {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 20px;
+    flex-shrink: 0;
+  }
+  .ob-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); margin-bottom: 2px; }
+  .ob-value { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .ob-divider { width: 1px; height: 36px; background: var(--border); flex-shrink: 0; }
+  .ob-actions { margin-left: auto; display: flex; gap: 8px; }
+  .ob-btn {
+    padding: 7px 16px; border-radius: var(--r-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; border: none;
+  }
+  .ob-btn.accept { background: var(--success); color: white; }
+  .ob-btn.accept:hover { background: #1d5038; }
+  .ob-btn.counter { background: transparent; color: var(--ink); border: 1.5px solid var(--border-med); }
+  .ob-btn.counter:hover { background: var(--cream-dark); }
+  .ob-accepted { display: flex; align-items: center; gap: 8px; background: var(--success-light); border-radius: var(--r-sm); padding: 8px 16px; font-size: 13px; font-weight: 600; color: var(--success); }
+
+  /* MESSAGES */
+  .messages-scroll {
+    flex: 1; overflow-y: auto;
+    padding: 24px;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+
+  .date-divider {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 11px; font-weight: 600; color: var(--ink-muted);
+    text-transform: uppercase; letter-spacing: 0.07em;
+  }
+  .date-divider::before, .date-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .msg-group { display: flex; flex-direction: column; gap: 4px; }
+  .msg-row { display: flex; gap: 10px; align-items: flex-end; }
+  .msg-row.mine { flex-direction: row-reverse; }
+  .msg-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; flex-shrink: 0;
+    font-family: 'DM Serif Display', serif;
+  }
+  .msg-row.theirs .msg-avatar { background: var(--accent-light); color: var(--accent); }
+  .msg-row.mine .msg-avatar { background: var(--blue-light); color: var(--blue); }
+  .msg-row.mine .msg-avatar { display: none; } /* hide own avatar for cleaner look */
+  .bubble-col { display: flex; flex-direction: column; gap: 3px; max-width: 68%; }
+  .msg-row.mine .bubble-col { align-items: flex-end; }
+  .sender-name { font-size: 11px; font-weight: 600; color: var(--ink-muted); padding: 0 4px; }
+  .bubble {
+    padding: 11px 15px; border-radius: 18px;
+    font-size: 14px; line-height: 1.55;
+  }
+  .msg-row.theirs .bubble {
+    background: var(--white); border: 1px solid var(--border);
+    color: var(--ink); border-bottom-left-radius: 4px;
+  }
+  .msg-row.mine .bubble {
+    background: var(--ink); color: var(--cream);
+    border-bottom-right-radius: 4px;
+  }
+  .msg-time { font-size: 11px; color: var(--ink-muted); padding: 0 4px; }
+
+  /* SPECIAL CARDS IN THREAD */
+  .card-msg {
+    max-width: 72%;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg); overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-msg-head {
+    padding: 12px 16px;
+    background: var(--cream-dark);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-muted);
+  }
+  .card-msg-body { padding: 14px 16px; }
+  .card-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .card-row:last-child { border-bottom: none; font-weight: 600; font-size: 15px; }
+  .card-row span:first-child { color: var(--ink-muted); }
+  .card-msg-foot {
+    padding: 10px 16px; background: var(--cream);
+    border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--ink-muted);
+    font-style: italic;
+  }
+
+  .system-msg {
+    text-align: center; font-size: 12px; color: var(--ink-muted);
+    background: var(--cream-dark); border-radius: 20px;
+    padding: 6px 16px; display: inline-block;
+    align-self: center;
+  }
+
+  /* INPUT BAR */
+  .input-bar {
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    padding: 14px 20px;
+    flex-shrink: 0;
+  }
+  .input-actions { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .ia-btn {
+    padding: 5px 12px; border-radius: 20px;
+    border: 1.5px solid var(--border-med);
+    background: transparent; font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500; cursor: pointer; color: var(--ink-muted);
+    transition: all 0.15s;
+  }
+  .ia-btn:hover { background: var(--cream-dark); color: var(--ink); }
+  .input-row { display: flex; gap: 10px; align-items: flex-end; }
+  .msg-input {
+    flex: 1; padding: 10px 16px;
+    border: 1.5px solid var(--border-med);
+    border-radius: var(--r-lg);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--ink);
+    background: var(--cream); outline: none;
+    resize: none; max-height: 120px; min-height: 42px;
+    transition: border-color 0.15s;
+    line-height: 1.5;
+  }
+  .msg-input:focus { border-color: var(--accent); background: var(--white); }
+  .send-btn {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--ink); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; flex-shrink: 0;
+  }
+  .send-btn:hover { background: var(--accent); transform: scale(1.05); }
+  .send-btn svg { width: 16px; height: 16px; fill: var(--cream); }
+
+  /* RIGHT PANEL - DEAL INFO */
+  .deal-info-panel {
+    width: 260px; flex-shrink: 0;
+    background: var(--white);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 20px 18px;
+  }
+  .dip-section { margin-bottom: 22px; }
+  .dip-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--ink-muted);
+    margin-bottom: 12px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dip-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; }
+  .dip-row span:first-child { color: var(--ink-muted); }
+  .dip-row span:last-child { font-weight: 500; color: var(--ink); text-align: right; max-width: 140px; }
+  .dip-tag {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 500; margin: 2px;
+  }
+  .dip-tag.success { background: var(--success-light); color: var(--success); }
+  .dip-tag.warn { background: var(--warning-light); color: var(--warning); }
+  .dip-fmv {
+    background: var(--blue-light); border-radius: var(--r-sm);
+    padding: 10px 12px; font-size: 13px;
+  }
+  .dip-fmv-val { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--ink); }
+  .dip-fmv-sub { font-size: 11px; color: var(--blue); font-weight: 600; margin-top: 2px; }
+
+  .counter-modal {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: rgba(22,20,15,0.45);
+    align-items: center; justify-content: center;
+  }
+  .counter-modal.open { display: flex; }
+  .counter-box {
+    background: var(--white); border-radius: var(--r-lg);
+    padding: 28px 32px; width: 420px;
+    box-shadow: 0 12px 48px rgba(22,20,15,0.2);
+  }
+  .counter-box h3 { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 6px; }
+  .counter-box p { font-size: 13px; color: var(--ink-muted); margin-bottom: 20px; }
+  .counter-fields { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+  .cf-label { font-size: 12px; font-weight: 600; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+  .cf-input {
+    width: 100%; padding: 10px 14px;
+    border: 1.5px solid var(--border-med); border-radius: var(--r-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+    color: var(--ink); background: var(--cream); outline: none;
+  }
+  .cf-input:focus { border-color: var(--accent); }
+  .counter-btns { display: flex; gap: 10px; }
+  .counter-btns button {
+    flex: 1; padding: 12px;
+    border-radius: var(--r-sm); font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer; border: none;
+    transition: all 0.15s;
+  }
+  .counter-btns .send { background: var(--ink); color: var(--cream); }
+  .counter-btns .send:hover { background: var(--accent); }
+  .counter-btns .cancel { background: var(--cream-dark); color: var(--ink-light); }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(22,20,15,0.15); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">Drive<span>Bid</span> <span style="font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(247,243,236,0.4);font-weight:400;margin-left:8px;">Messaging</span></div>
+  <div class="view-toggle">
+    <button class="vt-btn active" onclick="setView('customer', this)">👤 Customer view</button>
+    <button class="vt-btn" onclick="setView('dealer', this)">🏢 Dealer view</button>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- THREAD LIST -->
+  <div class="thread-list">
+    <div class="tl-header">
+      <h2 id="tl-title">My conversations</h2>
+      <input class="tl-search" placeholder="Search messages…">
+    </div>
+    <div class="tl-body" id="thread-list-body">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- MESSAGE PANE -->
+  <div class="msg-pane">
+    <div class="deal-header">
+      <div class="dh-left">
+        <div class="dh-names" id="dh-names">Riverside Honda → Alex M.</div>
+        <div class="dh-vehicle" id="dh-vehicle">2025 Honda Pilot TrailSport AWD</div>
+        <div class="dh-chips">
+          <span class="dh-chip accent" id="dh-req">Request #DR-4821</span>
+          <span class="dh-chip success" id="dh-status">Offer received</span>
+          <span class="dh-chip" id="dh-plan">📍 18 mi away</span>
+        </div>
+      </div>
+      <div class="dh-right">
+        <button class="hdr-btn" onclick="showCounterModal()">Counter offer</button>
+        <button class="hdr-btn primary" id="hdr-accept-btn" onclick="acceptFromHeader()">Accept offer</button>
+      </div>
+    </div>
+
+    <!-- OFFER BANNER -->
+    <div class="offer-banner" id="offer-banner">
+      <div>
+        <div class="ob-label">Current offer</div>
+        <div class="ob-value">$668/mo</div>
+      </div>
+      <div class="ob-divider"></div>
+      <div>
+        <div class="ob-label">Term</div>
+        <div class="ob-value">36-mo lease</div>
+      </div>
+      <div class="ob-divider"></div>
+      <div>
+        <div class="ob-label">At signing</div>
+        <div class="ob-value">$2,500</div>
+      </div>
+      <div class="ob-divider"></div>
+      <div>
+        <div class="ob-label">Fair market value</div>
+        <div class="ob-value" style="color:var(--success);">$689/mo ↓ $21 below</div>
+      </div>
+      <div class="ob-actions" id="ob-actions">
+        <button class="ob-btn counter" onclick="showCounterModal()">Counter</button>
+        <button class="ob-btn accept" onclick="acceptOffer()">Accept offer</button>
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="messages-scroll" id="messages-scroll">
+      <!-- populated by JS -->
+    </div>
+
+    <!-- INPUT -->
+    <div class="input-bar">
+      <div class="input-actions" id="input-actions">
+        <!-- populated by JS -->
+      </div>
+      <div class="input-row">
+        <textarea class="msg-input" id="msg-input" placeholder="Type a message…" rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"
+          oninput="autoResize(this)"></textarea>
+        <button class="send-btn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24"><path d="M2 21L23 12 2 3v7l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEAL INFO PANEL -->
+  <div class="deal-info-panel">
+    <div class="dip-section">
+      <div class="dip-title">Offer details</div>
+      <div class="dip-row"><span>Monthly</span><span>$668/mo</span></div>
+      <div class="dip-row"><span>Type</span><span>36-mo lease</span></div>
+      <div class="dip-row"><span>At signing</span><span>$2,500</span></div>
+      <div class="dip-row"><span>Miles/yr</span><span>10,000</span></div>
+      <div class="dip-row"><span>APR equiv.</span><span>3.0%</span></div>
+      <div class="dip-row"><span>Total cost</span><span>$26,548</span></div>
+    </div>
+
+    <div class="dip-section">
+      <div class="dip-title">Fair market value</div>
+      <div class="dip-fmv">
+        <div class="dip-fmv-val">$689/mo</div>
+        <div class="dip-fmv-sub">↓ $21 below market — good deal</div>
+      </div>
+    </div>
+
+    <div class="dip-section">
+      <div class="dip-title">Customer request</div>
+      <div class="dip-row"><span>Type</span><span>New SUV</span></div>
+      <div class="dip-row"><span>Budget</span><span>≤ $700/mo</span></div>
+      <div class="dip-row"><span>Timeline</span><span>ASAP</span></div>
+      <div class="dip-row"><span>Transaction</span><span>Lease or finance</span></div>
+    </div>
+
+    <div class="dip-section">
+      <div class="dip-title">Required features</div>
+      <div>
+        <span class="dip-tag success">✓ AWD</span>
+        <span class="dip-tag success">✓ CarPlay</span>
+        <span class="dip-tag success">✓ Heated seats</span>
+        <span class="dip-tag success">✓ Blind spot</span>
+        <span class="dip-tag success">✓ Sunroof</span>
+      </div>
+    </div>
+
+    <div class="dip-section">
+      <div class="dip-title">Dealer</div>
+      <div class="dip-row"><span>Name</span><span>Riverside Honda</span></div>
+      <div class="dip-row"><span>Rating</span><span>★ 4.8 (312)</span></div>
+      <div class="dip-row"><span>Distance</span><span>18 mi away</span></div>
+      <div class="dip-row"><span>Status</span><span style="color:var(--success);font-weight:600;">✓ Verified</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- COUNTER OFFER MODAL -->
+<div class="counter-modal" id="counter-modal">
+  <div class="counter-box">
+    <h3>Send a counter offer</h3>
+    <p>Propose your preferred terms. The dealer will receive this and can accept, counter again, or decline.</p>
+    <div class="counter-fields">
+      <div>
+        <div class="cf-label">Your target monthly payment</div>
+        <input class="cf-input" type="text" id="counter-monthly" value="$635" placeholder="e.g. $635/mo">
+      </div>
+      <div>
+        <div class="cf-label">Notes to dealer (optional)</div>
+        <textarea class="cf-input" style="min-height:70px;font-size:14px;font-weight:400;resize:none;" placeholder="e.g. I'd like to stay closer to $635/mo — happy to discuss term length or down payment to get there."></textarea>
+      </div>
+    </div>
+    <div class="counter-btns">
+      <button class="cancel" onclick="closeCounter()">Cancel</button>
+      <button class="send" onclick="sendCounter()">Send counter offer →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentView = 'customer';
+  let offerAccepted = false;
+
+  const threads = {
+    customer: [
+      { id: 1, name: 'Riverside Honda', vehicle: '2025 Honda Pilot AWD', preview: 'Happy to work on the monthly — let me check with…', time: '2m ago', status: 'active-deal', unread: true, active: true },
+      { id: 2, name: 'Metro Toyota', vehicle: '2024 Toyota RAV4 AWD', preview: 'Our offer stands at $641/mo. Let us know if…', time: '1h ago', status: 'new', unread: false, active: false },
+      { id: 3, name: 'Valley Nissan', vehicle: '2025 Nissan Pathfinder AWD', preview: 'Here is our complete offer breakdown for the…', time: '3h ago', status: 'new', unread: false, active: false },
+    ],
+    dealer: [
+      { id: 1, name: 'Alex M. (#DR-4821)', vehicle: '2025 Honda Pilot AWD', preview: 'Could you get closer to $635/mo? I love the car…', time: '2m ago', status: 'active-deal', unread: true, active: true },
+      { id: 2, name: 'Jordan T. (#DR-4809)', vehicle: '2024 Honda Accord Sport', preview: 'Thanks for the info — I'll review and get back…', time: '45m ago', status: 'new', unread: false, active: false },
+      { id: 3, name: 'Morgan S. (#DR-4798)', vehicle: '2023 Honda Odyssey CPO', preview: 'Deal accepted — can we schedule for Saturday?', time: 'Yesterday', status: 'closed', unread: false, active: false },
+      { id: 4, name: 'Riley B. (#DR-4791)', vehicle: '2025 Honda Prologue EV', preview: 'Does the federal tax credit apply if I lease?', time: 'Yesterday', status: 'new', unread: false, active: false },
+    ]
+  };
+
+  const messages = {
+    customer: [
+      { type: 'date', text: 'Yesterday' },
+      { type: 'system', text: 'You expressed interest in Riverside Honda\'s offer on request #DR-4821' },
+      { type: 'msg', from: 'theirs', avatar: 'R', name: 'Riverside Honda', text: 'Hi Alex! Thanks for your interest in our 2025 Pilot TrailSport. We\'re excited to work with you on this — it\'s a great match for what you\'re looking for. I wanted to reach out personally before we go further. Do you have any questions about the offer, or anything you\'d like to adjust?', time: '3:14 PM' },
+      { type: 'msg', from: 'mine', name: 'You', text: 'Hi! Yes, the Pilot looks great — it checks pretty much every box. I was hoping you might be able to come down a bit on the monthly. Could we get closer to $635?', time: '3:28 PM' },
+      { type: 'msg', from: 'theirs', avatar: 'R', name: 'Riverside Honda', text: 'That\'s a fair ask, Alex. I appreciate you being upfront about the number. Let me see what we can do on our end. A couple of questions — are you flexible on the trim at all, or is the TrailSport a must? And what\'s your situation with the trade-in? That could help us bridge the gap.', time: '3:35 PM' },
+      { type: 'msg', from: 'mine', name: 'You', text: 'TrailSport is pretty important to me mainly for the AWD and the interior. The trade-in is a 2019 CR-V EX, about 54,000 miles, good condition. I was thinking maybe $17k–$18k for it?', time: '3:52 PM' },
+      { type: 'date', text: 'Today' },
+      { type: 'msg', from: 'theirs', avatar: 'R', name: 'Riverside Honda', text: 'Good morning Alex. I ran the numbers with my sales manager. Based on the trade-in estimate, here\'s a revised offer we can lock in today:', time: '9:04 AM' },
+      { type: 'offer-card', from: 'theirs', avatar: 'R', fields: [
+        { label: 'Vehicle', value: '2025 Honda Pilot TrailSport AWD' },
+        { label: 'Monthly payment', value: '$651/mo' },
+        { label: 'Lease term', value: '36 months / 10,000 mi/yr' },
+        { label: 'Due at signing', value: '$1,500 (reduced from $2,500)' },
+        { label: 'Trade-in applied', value: '$17,800 toward down payment' },
+        { label: 'Effective monthly', value: '$651/mo — your all-in cost' },
+      ], note: 'Offer valid through end of this week. Happy to schedule a test drive anytime.' },
+      { type: 'msg', from: 'mine', name: 'You', text: 'That\'s really helpful, thank you! $651 is still a little above where I\'d like to be. Is $640 at all achievable? I\'m genuinely ready to move forward this week if we can get there.', time: '10:17 AM' },
+      { type: 'msg', from: 'theirs', avatar: 'R', name: 'Riverside Honda', text: 'Alex, I went back to my GM and here\'s where we landed — we can do $644/mo. That\'s honestly the floor for us on this unit, but we\'ll cover your first month\'s payment as well, so effectively you\'re at $644 with month 1 free. That brings your average effective monthly to around $626 over the 36 months. Does that work for you?', time: '11:42 AM' },
+      { type: 'msg', from: 'mine', name: 'You', text: 'Okay that actually makes a lot of sense and I really appreciate you working with me on this. I think I\'m ready to move forward. What are the next steps?', time: '11:58 AM' },
+      { type: 'msg', from: 'theirs', avatar: 'R', name: 'Riverside Honda', text: 'Excellent! I\'m thrilled we got there. Here\'s what happens next: I\'ll send you a formal deal summary through DriveBid shortly. When you\'re ready, we\'ll schedule a signing appointment — we can do weekdays or Saturday morning. The Pilot is in stock in Crystal Black Pearl and Sonic Gray Pearl. Which color do you prefer?', time: '12:03 PM' },
+      { type: 'msg', from: 'mine', name: 'You', text: 'I\'d love the Sonic Gray! Can we do Saturday around 10am?', time: '12:09 PM' },
+      { type: 'msg', from: 'theirs', avatar: 'R', name: 'Riverside Honda', text: 'Saturday 10am works perfectly. I\'ll send a calendar invite to your email. We\'ll have the Sonic Gray Pilot detailed and ready for you. See you then, Alex — and congratulations on the new car! 🎉', time: '12:14 PM' },
+      { type: 'system', text: 'Appointment confirmed: Saturday, 10:00 AM at Riverside Honda' },
+    ],
+    dealer: [
+      { type: 'date', text: 'Yesterday' },
+      { type: 'system', text: 'Customer Alex M. expressed interest in your offer for request #DR-4821' },
+      { type: 'msg', from: 'mine', name: 'You (Riverside Honda)', text: 'Hi Alex! Thanks for your interest in our 2025 Pilot TrailSport. We\'re excited to work with you on this — it\'s a great match for what you\'re looking for. Do you have any questions about the offer, or anything you\'d like to adjust?', time: '3:14 PM' },
+      { type: 'msg', from: 'theirs', avatar: 'A', name: 'Alex M.', text: 'Hi! Yes, the Pilot looks great — it checks pretty much every box. I was hoping you might be able to come down a bit on the monthly. Could we get closer to $635?', time: '3:28 PM' },
+      { type: 'msg', from: 'mine', name: 'You', text: 'That\'s a fair ask, Alex. Let me see what we can do on our end. Are you flexible on the trim at all, or is the TrailSport a must? And what\'s your situation with the trade-in?', time: '3:35 PM' },
+      { type: 'msg', from: 'theirs', avatar: 'A', name: 'Alex M.', text: 'TrailSport is pretty important to me mainly for the AWD and the interior. The trade-in is a 2019 CR-V EX, about 54,000 miles, good condition. I was thinking maybe $17k–$18k for it?', time: '3:52 PM' },
+      { type: 'date', text: 'Today' },
+      { type: 'msg', from: 'mine', name: 'You', text: 'Good morning Alex. I ran the numbers with my sales manager. Based on the trade-in estimate, here\'s a revised offer we can lock in today:', time: '9:04 AM' },
+      { type: 'offer-card', from: 'mine', fields: [
+        { label: 'Vehicle', value: '2025 Honda Pilot TrailSport AWD' },
+        { label: 'Monthly payment', value: '$651/mo' },
+        { label: 'Lease term', value: '36 months / 10,000 mi/yr' },
+        { label: 'Due at signing', value: '$1,500 (reduced from $2,500)' },
+        { label: 'Trade-in applied', value: '$17,800 toward down payment' },
+        { label: 'Effective monthly', value: '$651/mo — all-in' },
+      ], note: 'Offer valid through end of this week.' },
+      { type: 'msg', from: 'theirs', avatar: 'A', name: 'Alex M.', text: 'That\'s really helpful, thank you! $651 is still a little above where I\'d like to be. Is $640 at all achievable? I\'m genuinely ready to move forward this week if we can get there.', time: '10:17 AM' },
+      { type: 'msg', from: 'mine', name: 'You', text: 'Alex, I went back to my GM and here\'s where we landed — we can do $644/mo with first month covered. That brings your effective average to around $626 over 36 months. Does that work?', time: '11:42 AM' },
+      { type: 'msg', from: 'theirs', avatar: 'A', name: 'Alex M.', text: 'Okay that actually makes a lot of sense. I think I\'m ready to move forward. What are the next steps?', time: '11:58 AM' },
+      { type: 'msg', from: 'mine', name: 'You', text: 'Excellent! I\'ll send a formal deal summary. We can schedule signing — weekdays or Saturday morning work. The Pilot is in stock in Crystal Black Pearl and Sonic Gray Pearl. Which color do you prefer?', time: '12:03 PM' },
+      { type: 'msg', from: 'theirs', avatar: 'A', name: 'Alex M.', text: 'I\'d love the Sonic Gray! Can we do Saturday around 10am?', time: '12:09 PM' },
+      { type: 'msg', from: 'mine', name: 'You', text: 'Saturday 10am works perfectly. I\'ll send a calendar invite. We\'ll have the Sonic Gray Pilot detailed and ready. See you then, Alex! 🎉', time: '12:14 PM' },
+      { type: 'system', text: 'Appointment confirmed: Saturday, 10:00 AM at Riverside Honda' },
+    ]
+  };
+
+  function renderThreadList() {
+    const body = document.getElementById('thread-list-body');
+    body.innerHTML = '';
+    threads[currentView].forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'thread-item' + (t.active ? ' active' : '');
+      div.innerHTML = `
+        ${t.unread ? '<div class="ti-unread"></div>' : ''}
+        <div class="ti-top">
+          <div class="ti-name">${t.name}</div>
+          <div class="ti-time">${t.time}</div>
+        </div>
+        <div class="ti-vehicle">${t.vehicle}</div>
+        <div class="ti-preview">${t.preview}</div>
+        <div><span class="ti-status ${t.status}">${t.status === 'active-deal' ? 'Active negotiation' : t.status === 'closed' ? 'Deal closed' : 'New lead'}</span></div>
+      `;
+      div.onclick = () => {
+        document.querySelectorAll('.thread-item').forEach(x => x.classList.remove('active'));
+        div.classList.add('active');
+      };
+      body.appendChild(div);
+    });
+  }
+
+  function renderMessages() {
+    const scroll = document.getElementById('messages-scroll');
+    scroll.innerHTML = '';
+    const msgs = messages[currentView];
+
+    msgs.forEach(m => {
+      if (m.type === 'date') {
+        const d = document.createElement('div');
+        d.className = 'date-divider'; d.textContent = m.text;
+        scroll.appendChild(d);
+      } else if (m.type === 'system') {
+        const s = document.createElement('div');
+        s.className = 'system-msg'; s.textContent = m.text;
+        scroll.appendChild(s);
+      } else if (m.type === 'msg') {
+        const row = document.createElement('div');
+        row.className = 'msg-row ' + m.from;
+        const isTheirs = m.from === 'theirs';
+        row.innerHTML = `
+          ${isTheirs ? `<div class="msg-avatar">${m.avatar || '?'}</div>` : ''}
+          <div class="bubble-col">
+            <div class="sender-name">${m.name}</div>
+            <div class="bubble">${m.text}</div>
+            <div class="msg-time">${m.time}</div>
+          </div>
+        `;
+        scroll.appendChild(row);
+      } else if (m.type === 'offer-card') {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'msg-row ' + m.from;
+        const isTheirs = m.from === 'theirs';
+        let rows = m.fields.map(f => `<div class="card-row"><span>${f.label}</span><span>${f.value}</span></div>`).join('');
+        wrapper.innerHTML = `
+          ${isTheirs ? `<div class="msg-avatar">${m.avatar || '?'}</div>` : ''}
+          <div class="bubble-col" style="max-width:72%">
+            ${isTheirs ? '<div class="sender-name">Riverside Honda</div>' : '<div class="sender-name">You</div>'}
+            <div class="card-msg">
+              <div class="card-msg-head">📋 Revised offer</div>
+              <div class="card-msg-body">${rows}</div>
+              ${m.note ? `<div class="card-msg-foot">${m.note}</div>` : ''}
+            </div>
+          </div>
+        `;
+        scroll.appendChild(wrapper);
+      }
+    });
+
+    scroll.scrollTop = scroll.scrollHeight;
+  }
+
+  function renderInputActions() {
+    const ia = document.getElementById('input-actions');
+    if (currentView === 'customer') {
+      ia.innerHTML = `
+        <button class="ia-btn" onclick="insertQuick('Can you come down to $635/mo?')">💬 Ask for lower price</button>
+        <button class="ia-btn" onclick="insertQuick('What colors are available for this vehicle?')">🎨 Ask about colors</button>
+        <button class="ia-btn" onclick="insertQuick('Can I schedule a test drive before signing?')">🚗 Request test drive</button>
+        <button class="ia-btn" onclick="showCounterModal()">↕ Counter offer</button>
+      `;
+    } else {
+      ia.innerHTML = `
+        <button class="ia-btn" onclick="insertQuick('I checked with my manager and here\\'s what we can do:')">📋 Share revised offer</button>
+        <button class="ia-btn" onclick="insertQuick('We have this vehicle in stock and ready for immediate delivery.')">✅ Confirm availability</button>
+        <button class="ia-btn" onclick="insertQuick('Would you like to schedule a test drive? We have availability this weekend.')">📅 Schedule test drive</button>
+        <button class="ia-btn" onclick="insertQuick('We can appraise your trade-in on-site with no obligation.')">🔄 Trade-in appraisal</button>
+      `;
+    }
+  }
+
+  function setView(view, btn) {
+    currentView = view;
+    document.querySelectorAll('.vt-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tl-title').textContent = view === 'customer' ? 'My conversations' : 'Customer threads';
+    document.getElementById('dh-names').textContent = view === 'customer' ? 'Riverside Honda → You' : 'Alex M. (#DR-4821)';
+    renderThreadList();
+    renderMessages();
+    renderInputActions();
+    if (offerAccepted) updateAcceptedState();
+  }
+
+  function sendMessage() {
+    const inp = document.getElementById('msg-input');
+    const txt = inp.value.trim(); if (!txt) return;
+    inp.value = ''; inp.style.height = 'auto';
+
+    const newMsg = {
+      type: 'msg',
+      from: 'mine',
+      name: currentView === 'customer' ? 'You' : 'You (Riverside Honda)',
+      text: txt,
+      time: 'Just now'
+    };
+    messages[currentView].push(newMsg);
+    renderMessages();
+
+    // Simulated reply after delay
+    setTimeout(() => {
+      const replies = currentView === 'customer'
+        ? ["Thanks for that, Alex. Let me look into this and get back to you shortly.",
+           "Great question — I'll check on that right away and follow up within the hour.",
+           "Understood. I'll bring this back to my manager and see what we can do for you."]
+        : ["Thanks for the update! I really appreciate you working with me on this.",
+           "That makes sense. Let me think it over and get back to you by end of day.",
+           "This is really helpful — I'm getting closer to a decision. Can I ask one more question?"];
+      const reply = replies[Math.floor(Math.random() * replies.length)];
+      const replyMsg = {
+        type: 'msg',
+        from: 'theirs',
+        avatar: currentView === 'customer' ? 'R' : 'A',
+        name: currentView === 'customer' ? 'Riverside Honda' : 'Alex M.',
+        text: reply,
+        time: 'Just now'
+      };
+      messages[currentView].push(replyMsg);
+      renderMessages();
+    }, 1800);
+  }
+
+  function insertQuick(txt) {
+    const inp = document.getElementById('msg-input');
+    inp.value = txt; inp.focus();
+    autoResize(inp);
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  function showCounterModal() {
+    document.getElementById('counter-modal').classList.add('open');
+  }
+  function closeCounter() {
+    document.getElementById('counter-modal').classList.remove('open');
+  }
+
+  function sendCounter() {
+    const val = document.getElementById('counter-monthly').value;
+    closeCounter();
+    const msg = { type: 'msg', from: 'mine', name: 'You', text: `Counter offer sent: ${val}/mo. I love the Pilot and I'm ready to move forward — can we make this work?`, time: 'Just now' };
+    messages[currentView].push(msg);
+    renderMessages();
+    setTimeout(() => {
+      const reply = { type: 'msg', from: 'theirs', avatar: currentView === 'customer' ? 'R' : 'A', name: currentView === 'customer' ? 'Riverside Honda' : 'Alex M.', text: 'Received your counter — let me take this to my manager and I\'ll have an answer within the hour. Thank you for working with us on this!', time: 'Just now' };
+      messages[currentView].push(reply);
+      renderMessages();
+    }, 1600);
+  }
+
+  function acceptOffer() {
+    offerAccepted = true;
+    updateAcceptedState();
+    const msg = { type: 'msg', from: 'mine', name: 'You', text: '✅ I\'d like to accept this offer. What are the next steps to move forward?', time: 'Just now' };
+    messages[currentView].push(msg);
+    const sys = { type: 'system', text: 'Offer accepted by customer · Deal is now in progress' };
+    messages[currentView].push(sys);
+    renderMessages();
+    setTimeout(() => {
+      const reply = { type: 'msg', from: 'theirs', avatar: 'R', name: 'Riverside Honda', text: 'Wonderful news, Alex! I\'ll prepare the deal summary now. We can schedule your signing appointment whenever is convenient. What days work best for you?', time: 'Just now' };
+      messages[currentView].push(reply);
+      renderMessages();
+    }, 1500);
+  }
+
+  function acceptFromHeader() { acceptOffer(); }
+
+  function updateAcceptedState() {
+    document.getElementById('ob-actions').innerHTML = '<div class="ob-accepted">✅ Offer accepted — deal in progress</div>';
+    document.getElementById('dh-status').textContent = '✅ Deal accepted';
+    document.getElementById('dh-status').style.background = 'var(--success-light)';
+    document.getElementById('dh-status').style.color = 'var(--success)';
+    document.getElementById('hdr-accept-btn').textContent = 'Deal accepted ✓';
+    document.getElementById('hdr-accept-btn').style.background = 'var(--success)';
+    document.getElementById('hdr-accept-btn').disabled = true;
+  }
+
+  // Init
+  renderThreadList();
+  renderMessages();
+  renderInputActions();
+</script>
+</body>
+</html>

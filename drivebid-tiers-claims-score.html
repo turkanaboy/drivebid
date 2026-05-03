@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DriveBid — Membership, Claims & Responsiveness</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #18170F;
+    --ink-light: #48463C;
+    --ink-muted: #8A8880;
+    --cream: #F8F4ED;
+    --cream-dark: #EEE9DF;
+    --cream-darker: #E3DDD1;
+    --white: #FFFFFF;
+    --accent: #C84B2F;
+    --accent-light: #F6EAE6;
+    --accent-mid: #DF6E52;
+    --gold: #A8782A;
+    --gold-light: #FBF3E2;
+    --gold-mid: #D4A045;
+    --success: #286649;
+    --success-light: #E7F3EC;
+    --warning: #974F0C;
+    --warning-light: #FEF2E4;
+    --danger: #9B2525;
+    --danger-light: #FBEAEA;
+    --blue: #1C4D82;
+    --blue-light: #E7EFF8;
+    --border: rgba(24,23,15,0.09);
+    --border-med: rgba(24,23,15,0.16);
+    --border-strong: rgba(24,23,15,0.26);
+    --shadow-sm: 0 1px 5px rgba(24,23,15,0.06);
+    --shadow: 0 4px 20px rgba(24,23,15,0.09);
+    --shadow-lg: 0 10px 44px rgba(24,23,15,0.13);
+    --r: 10px;
+    --r-sm: 6px;
+    --r-lg: 16px;
+    --r-xl: 24px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    height: 54px; background: var(--ink);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px; position: sticky; top: 0; z-index: 300;
+  }
+  .logo { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--cream); letter-spacing: -0.3px; }
+  .logo span { color: var(--accent-mid); }
+  .tab-row { display: flex; gap: 4px; }
+  .tab {
+    padding: 6px 18px; border-radius: 20px; border: none;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+    background: transparent; color: rgba(248,244,237,0.45);
+  }
+  .tab.active { background: var(--cream); color: var(--ink); }
+  .tab:hover:not(.active) { color: var(--cream); }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ═══════════════════════════════
+     SCREEN 1 — MEMBERSHIP TIERS
+  ═══════════════════════════════ */
+  .tier-page { max-width: 980px; margin: 0 auto; padding: 60px 32px; }
+  .tier-hero { text-align: center; margin-bottom: 52px; }
+  .tier-eyebrow {
+    display: inline-block; background: var(--accent-light); color: var(--accent);
+    font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 20px; margin-bottom: 18px;
+  }
+  .tier-hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px,5vw,54px); line-height: 1.12; letter-spacing: -0.8px;
+    margin-bottom: 14px;
+  }
+  .tier-hero h1 em { font-style: italic; color: var(--accent); }
+  .tier-hero p { font-size: 17px; color: var(--ink-light); max-width: 500px; margin: 0 auto; }
+
+  .tier-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 40px; align-items: start; }
+
+  .tier-card {
+    background: var(--white); border: 1.5px solid var(--border-med);
+    border-radius: var(--r-lg); overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+    position: relative;
+  }
+  .tier-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+  .tier-card.featured { border-color: var(--gold); border-width: 2px; }
+  .tier-card.featured::before {
+    content: '⭐ Most popular';
+    display: block; background: var(--gold); color: white;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+    text-align: center; padding: 7px;
+  }
+
+  .tier-head { padding: 24px 24px 20px; border-bottom: 1px solid var(--border); }
+  .tier-name { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-muted); margin-bottom: 6px; }
+  .tier-price { font-family: 'Playfair Display', serif; font-size: 40px; line-height: 1; margin-bottom: 4px; }
+  .tier-price sup { font-family: 'DM Sans', sans-serif; font-size: 20px; font-weight: 500; vertical-align: super; }
+  .tier-price sub { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 400; color: var(--ink-muted); }
+  .tier-tagline { font-size: 13px; color: var(--ink-muted); margin-top: 8px; line-height: 1.5; }
+
+  .tier-body { padding: 20px 24px; }
+  .feat-group { margin-bottom: 18px; }
+  .feat-group-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--ink-muted); margin-bottom: 8px;
+  }
+  .feat-row { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; padding: 4px 0; }
+  .feat-icon { width: 16px; flex-shrink: 0; margin-top: 2px; font-size: 12px; }
+  .feat-row.yes .feat-icon::after { content: '✓'; color: var(--success); font-weight: 700; }
+  .feat-row.no .feat-icon::after { content: '–'; color: var(--ink-muted); }
+  .feat-row.no span { color: var(--ink-muted); }
+  .feat-row .badge {
+    display: inline-block; margin-left: 6px;
+    padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 600;
+    background: var(--gold-light); color: var(--gold);
+  }
+
+  .tier-foot { padding: 16px 24px 24px; }
+  .tier-btn {
+    width: 100%; padding: 13px;
+    border-radius: var(--r-xl); border: none;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .tier-btn.free { background: var(--cream-dark); color: var(--ink); }
+  .tier-btn.free:hover { background: var(--cream-darker); }
+  .tier-btn.member { background: var(--gold); color: white; }
+  .tier-btn.member:hover { background: var(--gold-mid); }
+  .tier-btn.pro { background: var(--ink); color: var(--cream); }
+  .tier-btn.pro:hover { background: var(--accent); }
+
+  /* COMPARISON TABLE */
+  .compare-wrap { background: var(--white); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; margin-bottom: 48px; }
+  .compare-title { padding: 18px 24px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 600; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 12px; }
+  .compare-table { width: 100%; border-collapse: collapse; }
+  .compare-table th { padding: 14px 20px; text-align: left; font-size: 13px; font-weight: 600; background: var(--cream); border-bottom: 1px solid var(--border); }
+  .compare-table th:not(:first-child) { text-align: center; }
+  .compare-table td { padding: 12px 20px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .compare-table td:not(:first-child) { text-align: center; }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table .cat-row td { background: var(--cream-dark); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); padding: 8px 20px; }
+  .c-yes { color: var(--success); font-weight: 700; }
+  .c-no { color: var(--ink-muted); }
+  .c-val { font-weight: 600; color: var(--ink); }
+  .c-gold { color: var(--gold); font-weight: 700; }
+  th.gold-col { color: var(--gold); }
+
+  /* ═══════════════════════════════
+     SCREEN 2 — CLAIM MECHANIC
+  ═══════════════════════════════ */
+  .claim-page { max-width: 860px; margin: 0 auto; padding: 52px 32px; }
+  .page-hero { margin-bottom: 40px; }
+  .page-eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 10px; }
+  .page-hero h1 { font-family: 'Playfair Display', serif; font-size: 36px; letter-spacing: -0.5px; margin-bottom: 10px; }
+  .page-hero p { font-size: 15px; color: var(--ink-light); max-width: 560px; line-height: 1.65; }
+
+  /* HOW THE CLOCK WORKS */
+  .mechanic-flow {
+    display: grid; grid-template-columns: repeat(4,1fr);
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border); border-radius: var(--r-lg);
+    overflow: hidden; margin-bottom: 32px;
+  }
+  .mf-cell { background: var(--white); padding: 22px 18px; }
+  .mf-num { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--cream-darker); line-height: 1; margin-bottom: 10px; }
+  .mf-title { font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+  .mf-desc { font-size: 12px; color: var(--ink-muted); line-height: 1.55; }
+
+  /* LIVE CLAIM DEMO */
+  .claim-demo { background: var(--white); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; margin-bottom: 28px; box-shadow: var(--shadow-sm); }
+  .cd-header {
+    padding: 16px 22px; background: var(--ink);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cd-title { font-size: 14px; font-weight: 600; color: var(--cream); }
+  .cd-sub { font-size: 12px; color: rgba(248,244,237,0.5); margin-top: 1px; }
+  .cd-view-toggle { display: flex; gap: 4px; }
+  .cd-vt {
+    padding: 4px 12px; border-radius: 20px; border: none;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer;
+    background: transparent; color: rgba(248,244,237,0.45); transition: all 0.15s;
+  }
+  .cd-vt.active { background: var(--cream); color: var(--ink); }
+
+  .cd-body { padding: 22px; }
+
+  /* CUSTOMER CLAIM VIEW */
+  .claim-card {
+    border: 1.5px solid var(--border-med);
+    border-radius: var(--r-lg); overflow: hidden; margin-bottom: 14px;
+  }
+  .claim-card.active-claim { border-color: var(--warning); }
+  .claim-card.open { border-color: var(--border-med); }
+  .claim-card.accepted { border-color: var(--success); }
+  .claim-card.denied { border-color: var(--border-med); opacity: 0.6; }
+
+  .cc-head {
+    padding: 14px 18px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .cc-dealer { font-size: 15px; font-weight: 600; }
+  .cc-vehicle { font-size: 13px; color: var(--accent); font-weight: 500; margin-top: 1px; }
+  .cc-meta { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+  .cc-right { text-align: right; flex-shrink: 0; }
+  .cc-price { font-family: 'Playfair Display', serif; font-size: 26px; line-height: 1; }
+  .cc-price-sub { font-size: 12px; color: var(--ink-muted); }
+  .fmv-pill {
+    display: inline-block; margin-top: 4px;
+    padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
+  .fmv-pill.good { background: var(--success-light); color: var(--success); }
+  .fmv-pill.fair { background: var(--gold-light); color: var(--gold); }
+  .fmv-pill.high { background: var(--danger-light); color: var(--danger); }
+
+  /* COUNTDOWN */
+  .countdown-bar {
+    padding: 12px 18px;
+    background: var(--warning-light);
+    border-bottom: 1px solid rgba(151,79,12,0.15);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .cd-clock { font-size: 22px; font-weight: 700; font-family: 'DM Sans', sans-serif; color: var(--warning); min-width: 70px; }
+  .cd-bar-wrap { flex: 1; }
+  .cd-bar-label { font-size: 12px; color: var(--warning); font-weight: 500; margin-bottom: 4px; }
+  .cd-bar-track { height: 6px; background: rgba(151,79,12,0.15); border-radius: 3px; overflow: hidden; }
+  .cd-bar-fill { height: 100%; background: var(--warning); border-radius: 3px; transition: width 1s linear; }
+  .cd-extend {
+    padding: 6px 14px; border-radius: var(--r-sm);
+    border: 1.5px solid var(--warning); background: transparent;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600;
+    color: var(--warning); cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .cd-extend:hover { background: var(--warning-light); }
+  .cd-extend.used { opacity: 0.4; cursor: not-allowed; }
+
+  .cc-body { padding: 14px 18px; display: flex; gap: 16px; align-items: center; }
+  .cc-features { flex: 1; display: flex; flex-wrap: wrap; gap: 5px; }
+  .cc-feat { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .cc-feat.yes { background: var(--success-light); color: var(--success); }
+  .cc-feat.no { background: var(--danger-light); color: var(--danger); }
+
+  .cc-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .btn-accept {
+    padding: 9px 20px; background: var(--success); color: white;
+    border: none; border-radius: var(--r-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-accept:hover { background: #1d5038; }
+  .btn-deny {
+    padding: 9px 16px; background: transparent; color: var(--ink-muted);
+    border: 1.5px solid var(--border-med); border-radius: var(--r-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-deny:hover { background: var(--cream-dark); color: var(--ink); }
+  .btn-negotiate {
+    padding: 9px 16px; background: transparent; color: var(--blue);
+    border: 1.5px solid var(--blue); border-radius: var(--r-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-negotiate:hover { background: var(--blue-light); }
+
+  .status-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: var(--r-sm); font-size: 13px; font-weight: 600;
+  }
+  .status-tag.accepted { background: var(--success-light); color: var(--success); }
+  .status-tag.denied { background: var(--cream-dark); color: var(--ink-muted); }
+  .status-tag.expired { background: var(--danger-light); color: var(--danger); }
+  .status-tag.waiting { background: var(--blue-light); color: var(--blue); }
+
+  /* DEALER CLAIM VIEW */
+  .dealer-lead-card {
+    border: 1px solid var(--border-med);
+    border-radius: var(--r-lg); overflow: hidden; margin-bottom: 14px;
+    background: var(--white);
+  }
+  .dlc-head {
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; justify-content: space-between;
+  }
+  .dlc-req { font-size: 15px; font-weight: 600; }
+  .dlc-sub { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+  .dlc-match { text-align: right; }
+  .dlc-match-num { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--ink); }
+  .dlc-match-lbl { font-size: 11px; color: var(--ink-muted); }
+  .dlc-body { padding: 14px 18px; display: flex; gap: 16px; align-items: center; }
+  .dlc-info { flex: 1; font-size: 13px; color: var(--ink-light); line-height: 1.6; }
+  .dlc-score-badge {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px; border-radius: var(--r-sm);
+    font-size: 13px; font-weight: 600; flex-shrink: 0;
+  }
+  .dlc-score-badge.great { background: var(--success-light); color: var(--success); }
+  .dlc-score-badge.fair { background: var(--gold-light); color: var(--gold); }
+  .dlc-score-badge.poor { background: var(--danger-light); color: var(--danger); }
+  .dlc-foot {
+    padding: 12px 18px; background: var(--cream);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .dlc-foot-info { font-size: 12px; color: var(--ink-muted); }
+  .btn-claim-lead {
+    padding: 9px 22px; background: var(--ink); color: var(--cream);
+    border: none; border-radius: var(--r-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-claim-lead:hover { background: var(--accent); }
+  .btn-claim-lead.claimed { background: var(--success); cursor: default; }
+  .btn-claim-lead.locked {
+    background: var(--cream-darker); color: var(--ink-muted);
+    cursor: not-allowed;
+  }
+
+  .locked-banner {
+    padding: 10px 18px;
+    background: var(--cream-dark); border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--ink-muted);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ═══════════════════════════════
+     SCREEN 3 — RESPONSIVENESS SCORE
+  ═══════════════════════════════ */
+  .score-page { max-width: 860px; margin: 0 auto; padding: 52px 32px; }
+
+  .score-overview {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 20px; margin-bottom: 28px;
+  }
+  .score-hero-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--r-lg); padding: 28px 24px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+  .score-ring {
+    width: 120px; height: 120px; border-radius: 50%;
+    border: 8px solid var(--cream-darker);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    margin-bottom: 16px; position: relative;
+  }
+  .score-ring.great { border-color: var(--success); }
+  .score-ring.fair { border-color: var(--gold); }
+  .score-ring.poor { border-color: var(--danger); }
+  .score-num { font-family: 'Playfair Display', serif; font-size: 38px; line-height: 1; }
+  .score-denom { font-size: 14px; color: var(--ink-muted); }
+  .score-label { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .score-sub { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
+
+  .score-breakdown {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--r-lg); padding: 24px;
+  }
+  .sb-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); margin-bottom: 18px; }
+  .sb-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .sb-label { font-size: 13px; color: var(--ink-light); width: 160px; flex-shrink: 0; }
+  .sb-bar-track { flex: 1; height: 8px; background: var(--cream-darker); border-radius: 4px; overflow: hidden; }
+  .sb-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+  .sb-bar-fill.great { background: var(--success); }
+  .sb-bar-fill.fair { background: var(--gold); }
+  .sb-bar-fill.poor { background: var(--danger); }
+  .sb-val { font-size: 13px; font-weight: 600; width: 40px; text-align: right; flex-shrink: 0; }
+
+  /* HISTORY TABLE */
+  .history-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--r-lg); overflow: hidden; margin-bottom: 24px;
+  }
+  .history-head {
+    padding: 16px 22px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .history-head-title { font-size: 14px; font-weight: 600; }
+  .history-table { width: 100%; border-collapse: collapse; }
+  .history-table th { padding: 10px 18px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); background: var(--cream); border-bottom: 1px solid var(--border); }
+  .history-table td { padding: 12px 18px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .history-table tr:last-child td { border-bottom: none; }
+  .outcome-pill {
+    padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    display: inline-block;
+  }
+  .outcome-pill.accepted { background: var(--success-light); color: var(--success); }
+  .outcome-pill.denied { background: var(--cream-darker); color: var(--ink-muted); }
+  .outcome-pill.negotiated { background: var(--blue-light); color: var(--blue); }
+  .outcome-pill.expired { background: var(--danger-light); color: var(--danger); }
+  .outcome-pill.pending { background: var(--warning-light); color: var(--warning); }
+  .counts-toward { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
+
+  /* DEALER SEES THIS */
+  .dealer-sees {
+    background: var(--cream-dark); border: 1px solid var(--border-med);
+    border-radius: var(--r-lg); padding: 22px; margin-bottom: 28px;
+  }
+  .ds-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-muted); margin-bottom: 16px; }
+  .ds-lead-preview {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 16px 18px;
+  }
+  .ds-preview-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .ds-req-title { font-size: 15px; font-weight: 600; }
+  .responsiveness-badge {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: var(--r-sm);
+    font-size: 13px; font-weight: 600;
+  }
+  .responsiveness-badge.great { background: var(--success-light); color: var(--success); }
+  .responsiveness-badge.fair { background: var(--gold-light); color: var(--gold); }
+  .responsiveness-badge.poor { background: var(--danger-light); color: var(--danger); }
+  .ds-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .ds-chip { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; background: var(--cream-dark); color: var(--ink-muted); }
+  .ds-note { font-size: 12px; color: var(--ink-muted); font-style: italic; border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px; }
+
+  /* RULES BOX */
+  .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
+  .rule-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 18px 20px;
+  }
+  .rule-icon { font-size: 24px; margin-bottom: 8px; }
+  .rule-title { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
+  .rule-desc { font-size: 13px; color: var(--ink-muted); line-height: 1.55; }
+
+  /* SIMULATE BUTTONS */
+  .sim-bar {
+    background: var(--ink); border-radius: var(--r);
+    padding: 14px 18px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .sim-label { font-size: 12px; color: rgba(248,244,237,0.5); font-weight: 500; white-space: nowrap; }
+  .sim-btn {
+    padding: 7px 16px; border-radius: var(--r-sm);
+    border: 1px solid rgba(248,244,237,0.2);
+    background: transparent; font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500; cursor: pointer; color: var(--cream);
+    transition: all 0.15s;
+  }
+  .sim-btn:hover { background: rgba(248,244,237,0.1); }
+  .sim-btn.go { background: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .sim-btn.go:hover { background: #a83c22; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: rgba(24,23,15,0.5); align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--white); border-radius: var(--r-lg);
+    padding: 28px 32px; width: 440px; max-width: 95vw;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal-box h3 { font-family: 'Playfair Display', serif; font-size: 22px; margin-bottom: 6px; }
+  .modal-box p { font-size: 13px; color: var(--ink-muted); margin-bottom: 20px; line-height: 1.6; }
+  .modal-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .modal-opt {
+    padding: 12px 16px; border-radius: var(--r);
+    border: 1.5px solid var(--border-med); cursor: pointer;
+    transition: all 0.15s; font-size: 14px; font-weight: 500; color: var(--ink);
+    background: var(--cream);
+  }
+  .modal-opt:hover { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+  .modal-opt.danger:hover { border-color: var(--danger); background: var(--danger-light); color: var(--danger); }
+  .modal-cancel { width: 100%; padding: 11px; border-radius: var(--r-sm); border: 1.5px solid var(--border-med); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; color: var(--ink-muted); transition: all 0.15s; }
+  .modal-cancel:hover { background: var(--cream-dark); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">Drive<span>Bid</span></div>
+  <div class="tab-row">
+    <button class="tab active" onclick="showScreen('tiers',this)">Membership tiers</button>
+    <button class="tab" onclick="showScreen('claims',this)">24-hr claim mechanic</button>
+    <button class="tab" onclick="showScreen('score',this)">Responsiveness score</button>
+  </div>
+</div>
+
+<!-- ═══ SCREEN 1: TIERS ═══ -->
+<div id="tiers" class="screen active">
+  <div class="tier-page" style="max-width:800px;">
+
+    <div class="tier-hero">
+      <div class="tier-eyebrow">No subscriptions. No surprises.</div>
+      <h1>Free to use.<br><em>$20</em> when you're ready to unlock.</h1>
+      <p>DriveBid is completely free. Pay $20 once per deal cycle to expand your reach and get more offers — no recurring charges, ever.</p>
+    </div>
+
+    <!-- TWO CARDS SIDE BY SIDE -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:36px;">
+
+      <!-- FREE -->
+      <div class="tier-card" style="border-radius:var(--r-lg);">
+        <div class="tier-head" style="padding:28px 28px 22px;">
+          <div class="tier-name">Free</div>
+          <div class="tier-price" style="font-size:52px;"><sup style="font-size:24px;">$</sup>0</div>
+          <div style="font-size:13px;color:var(--ink-muted);margin-top:4px;">Always free. No card required.</div>
+          <div class="tier-tagline" style="margin-top:12px;">Everything you need to get real offers from real dealers — right out of the gate.</div>
+        </div>
+        <div class="tier-body" style="padding:20px 28px;">
+          <div class="feat-group">
+            <div class="feat-group-label">What's included</div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span>1 active bid request at a time</span></div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span>Dealers within 50 miles</span></div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span><strong>Fair market value</strong> on every offer</span></div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span>AI car advisor — full access</span></div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span>Dealer messaging &amp; negotiation</span></div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span>Offer comparison dashboard</span></div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span>24-hr claim window protection</span></div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span>Responsiveness score</span></div>
+          </div>
+        </div>
+        <div class="tier-foot" style="padding:16px 28px 28px;">
+          <button class="tier-btn free" style="border-radius:var(--r-lg);">Get started — it's free</button>
+        </div>
+      </div>
+
+      <!-- UNLOCKED -->
+      <div class="tier-card featured" style="border-radius:var(--r-lg);">
+        <div class="tier-head" style="padding:28px 28px 22px;">
+          <div class="tier-name" style="color:var(--gold);">Unlocked</div>
+          <div style="display:flex;align-items:baseline;gap:10px;">
+            <div class="tier-price" style="font-size:52px;"><sup style="font-size:24px;">$</sup>20</div>
+            <div style="font-size:14px;color:var(--ink-muted);font-weight:500;">one time<br>per deal</div>
+          </div>
+          <div style="font-size:13px;color:var(--ink-muted);margin-top:4px;">Pay once. Active until your deal closes.</div>
+          <div class="tier-tagline" style="margin-top:12px;">For buyers who want maximum reach and competition. Pay once per purchase cycle — no recurring charges.</div>
+        </div>
+        <div class="tier-body" style="padding:20px 28px;">
+          <div class="feat-group">
+            <div class="feat-group-label">Everything in Free, plus</div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span>Up to 3 simultaneous requests</span></div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span>Nationwide dealer radius <span class="badge">No limits</span></span></div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span>Priority placement — dealers see you first</span></div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span>Dealer performance &amp; review reports</span></div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span>Price history &amp; market trend data</span></div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span>Multi-vehicle comparison mode</span></div>
+            <div class="feat-row yes"><div class="feat-icon"></div><span>Saved search profiles &amp; deal alerts</span></div>
+          </div>
+        </div>
+        <div class="tier-foot" style="padding:16px 28px 28px;">
+          <button class="tier-btn member" onclick="showUnlockModal()" style="border-radius:var(--r-lg);">Unlock for this purchase — $20</button>
+          <div style="text-align:center;font-size:12px;color:var(--ink-muted);margin-top:10px;">Resets automatically when your deal closes. Pay again next time you buy.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VALUE CALLOUT -->
+    <div style="background:var(--ink);border-radius:var(--r-lg);padding:28px 32px;display:flex;align-items:center;gap:32px;margin-bottom:36px;">
+      <div style="flex:1;">
+        <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--cream);margin-bottom:6px;">$20 vs. $2,100</div>
+        <div style="font-size:14px;color:rgba(248,244,237,0.6);line-height:1.6;">Our buyers save an average of $2,100 below MSRP. Unlocking costs $20 once. That's a 100× return if expanded reach lands you just one better offer.</div>
+      </div>
+      <div style="text-align:center;flex-shrink:0;">
+        <div style="font-family:'Playfair Display',serif;font-size:48px;color:var(--accent-mid);line-height:1;">100×</div>
+        <div style="font-size:12px;color:rgba(248,244,237,0.45);margin-top:2px;">avg. return on unlock</div>
+      </div>
+    </div>
+
+    <!-- COMPARISON TABLE -->
+    <div class="compare-wrap">
+      <div class="compare-title">What you get in each tier</div>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th style="width:50%">Feature</th>
+            <th>Free</th>
+            <th class="gold-col">Unlocked — $20</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="cat-row"><td colspan="3">Core features</td></tr>
+          <tr><td>Fair market value on offers</td><td class="c-yes">✓ Always free</td><td class="c-yes">✓ Always free</td></tr>
+          <tr><td>AI car advisor</td><td class="c-yes">✓</td><td class="c-yes">✓</td></tr>
+          <tr><td>Dealer messaging &amp; negotiation</td><td class="c-yes">✓</td><td class="c-yes">✓</td></tr>
+          <tr><td>24-hr claim window protection</td><td class="c-yes">✓</td><td class="c-yes">✓</td></tr>
+          <tr><td>Responsiveness score</td><td class="c-yes">✓</td><td class="c-yes">✓</td></tr>
+          <tr class="cat-row"><td colspan="3">Reach &amp; visibility</td></tr>
+          <tr><td>Active requests at once</td><td class="c-val">1</td><td class="c-gold">3</td></tr>
+          <tr><td>Dealer search radius</td><td class="c-val">50 miles</td><td class="c-gold">Nationwide</td></tr>
+          <tr><td>Request priority placement</td><td class="c-no">–</td><td class="c-gold">✓ Dealers see you first</td></tr>
+          <tr class="cat-row"><td colspan="3">Data &amp; tools</td></tr>
+          <tr><td>Dealer performance reports</td><td class="c-no">–</td><td class="c-gold">✓</td></tr>
+          <tr><td>Price history &amp; trend data</td><td class="c-no">–</td><td class="c-gold">✓</td></tr>
+          <tr><td>Multi-vehicle comparison</td><td class="c-no">–</td><td class="c-gold">✓</td></tr>
+          <tr><td>Saved search &amp; deal alerts</td><td class="c-no">–</td><td class="c-gold">✓</td></tr>
+          <tr class="cat-row"><td colspan="3">Billing</td></tr>
+          <tr><td>Recurring charges</td><td class="c-yes">None — ever</td><td class="c-yes">None — ever</td></tr>
+          <tr><td>When does it expire?</td><td class="c-val">Never</td><td class="c-gold">When your deal closes</td></tr>
+          <tr><td>Cost to buy again in 3 years</td><td class="c-val">$0</td><td class="c-gold">$20 again — same deal</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FAQ STRIP -->
+    <div style="margin-top:28px;display:flex;flex-direction:column;gap:12px;">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px 22px;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:5px;">What counts as a "deal closing"?</div>
+        <div style="font-size:13px;color:var(--ink-muted);line-height:1.6;">When you mark a deal as accepted in DriveBid, or after 90 days of inactivity on an unlocked request, the unlock period ends. Your free account stays active forever — only the $20 unlock resets.</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px 22px;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:5px;">Do I need to unlock to get good offers?</div>
+        <div style="font-size:13px;color:var(--ink-muted);line-height:1.6;">No. Many buyers get great offers on the free tier — especially in metro areas with lots of nearby dealers. The unlock makes most sense if you're in a smaller market, looking for a rare vehicle, or want to run multiple searches at once.</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px 22px;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:5px;">Why $20 and not a monthly subscription?</div>
+        <div style="font-size:13px;color:var(--ink-muted);line-height:1.6;">Because you buy a car once every few years, not every month. A subscription would make no sense for most buyers. We'd rather charge a fair one-time fee that's clearly tied to the value of the deal you're working on.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- UNLOCK MODAL -->
+<div class="modal-overlay" id="unlock-modal">
+  <div class="modal-box">
+    <h3>Unlock for this purchase</h3>
+    <p>One payment of $20 unlocks all features until your deal closes — no subscriptions, no auto-renewals.</p>
+    <div style="background:var(--gold-light);border:1.5px solid var(--gold);border-radius:var(--r);padding:16px 18px;margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="font-size:14px;font-weight:600;">DriveBid Unlock — one deal</span>
+        <span style="font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);">$20</span>
+      </div>
+      <div style="font-size:12px;color:var(--ink-muted);line-height:1.6;">
+        ✓ Nationwide dealer radius &nbsp;·&nbsp; ✓ Up to 3 requests &nbsp;·&nbsp; ✓ Priority placement<br>
+        ✓ Dealer reports &nbsp;·&nbsp; ✓ Price trends &nbsp;·&nbsp; ✓ Multi-vehicle comparison<br><br>
+        Active until your deal closes or 90 days of inactivity. No recurring charges.
+      </div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted);margin-bottom:8px;">Card number</div>
+      <input style="width:100%;padding:10px 14px;border:1.5px solid var(--border-med);border-radius:var(--r-sm);font-size:14px;font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--cream);outline:none;" type="text" placeholder="•••• •••• •••• ••••">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+      <div>
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted);margin-bottom:8px;">Expiration</div>
+        <input style="width:100%;padding:10px 14px;border:1.5px solid var(--border-med);border-radius:var(--r-sm);font-size:14px;font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--cream);outline:none;" type="text" placeholder="MM / YY">
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted);margin-bottom:8px;">CVC</div>
+        <input style="width:100%;padding:10px 14px;border:1.5px solid var(--border-med);border-radius:var(--r-sm);font-size:14px;font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--cream);outline:none;" type="text" placeholder="•••">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="modal-cancel" onclick="closeModal('unlock-modal')" style="flex:1;">Cancel</button>
+      <button onclick="confirmUnlock()" style="flex:2;padding:13px;background:var(--gold);color:white;border:none;border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.15s;">Pay $20 &amp; unlock →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN 2: CLAIM MECHANIC ═══ -->
+<div id="claims" class="screen">
+  <div class="claim-page">
+    <div class="page-hero">
+      <div class="page-eyebrow">How claims work</div>
+      <h1>The 24-hour claim window</h1>
+      <p>When a dealer claims your request, you get 24 hours of exclusive priority to respond — accept, negotiate, or pass. This protects dealers from investing time in offers that go nowhere, and keeps the marketplace moving.</p>
+    </div>
+
+    <div class="mechanic-flow">
+      <div class="mf-cell">
+        <div class="mf-num">01</div>
+        <div class="mf-title">Dealer claims your request</div>
+        <div class="mf-desc">A verified dealer reviews your request and decides to submit an offer. Your 24-hour window starts immediately.</div>
+      </div>
+      <div class="mf-cell">
+        <div class="mf-num">02</div>
+        <div class="mf-title">You get notified instantly</div>
+        <div class="mf-desc">Email and in-app notification with the offer details and a clear countdown. One extension of 24hrs is available if you need more time.</div>
+      </div>
+      <div class="mf-cell">
+        <div class="mf-num">03</div>
+        <div class="mf-title">Accept, negotiate, or pass</div>
+        <div class="mf-desc">Accepting opens the full messaging thread. Negotiating sends a counter. Passing releases the slot — no penalty to your score.</div>
+      </div>
+      <div class="mf-cell">
+        <div class="mf-num">04</div>
+        <div class="mf-title">Next dealer can claim</div>
+        <div class="mf-desc">If you pass or the window expires without response, the next matched dealer can claim. Unanswered windows affect your responsiveness score.</div>
+      </div>
+    </div>
+
+    <!-- VIEW TOGGLE -->
+    <div class="claim-demo">
+      <div class="cd-header">
+        <div>
+          <div class="cd-title">Live demo — request #DR-4821</div>
+          <div class="cd-sub">SUV · New · ≤$700/mo · AWD, Apple CarPlay</div>
+        </div>
+        <div class="cd-view-toggle">
+          <button class="cd-vt active" onclick="claimView('customer',this)">Customer view</button>
+          <button class="cd-vt" onclick="claimView('dealer',this)">Dealer view</button>
+        </div>
+      </div>
+      <div class="cd-body">
+
+        <!-- CUSTOMER CLAIM VIEW -->
+        <div id="cv-customer">
+          <div class="sim-bar">
+            <span class="sim-label">Simulate:</span>
+            <button class="sim-btn go" onclick="simAccept()">✓ Accept offer</button>
+            <button class="sim-btn" onclick="simNegotiate()">↕ Send counter</button>
+            <button class="sim-btn" onclick="simDeny()">✗ Pass on offer</button>
+            <button class="sim-btn" onclick="simExtend()">⏱ Extend window</button>
+            <button class="sim-btn" onclick="simExpire()">⚠ Let it expire</button>
+            <button class="sim-btn" onclick="simReset()">↺ Reset</button>
+          </div>
+
+          <!-- ACTIVE CLAIM CARD -->
+          <div class="claim-card active-claim" id="claim-card-1">
+            <div class="cc-head">
+              <div>
+                <div class="cc-dealer">Riverside Honda</div>
+                <div class="cc-vehicle">2025 Honda Pilot TrailSport AWD</div>
+                <div class="cc-meta">★ 4.8 · Verified dealer · 18 mi away</div>
+              </div>
+              <div class="cc-right">
+                <div class="cc-price">$668<span style="font-size:16px;color:var(--ink-muted)">/mo</span></div>
+                <div class="cc-price-sub">36-mo lease · $2,500 at signing</div>
+                <div class="fmv-pill good">↓ $21 below market</div>
+              </div>
+            </div>
+            <div class="countdown-bar" id="countdown-bar">
+              <div class="cd-clock" id="cd-clock">18:42:07</div>
+              <div class="cd-bar-wrap">
+                <div class="cd-bar-label">Time remaining to respond · Clock pauses if dealer goes quiet</div>
+                <div class="cd-bar-track"><div class="cd-bar-fill" id="cd-fill" style="width:78%"></div></div>
+              </div>
+              <button class="cd-extend" id="extend-btn" onclick="simExtend()">+24hrs once</button>
+            </div>
+            <div class="cc-body">
+              <div class="cc-features">
+                <span class="cc-feat yes">✓ AWD</span>
+                <span class="cc-feat yes">✓ Apple CarPlay</span>
+                <span class="cc-feat yes">✓ Heated seats</span>
+                <span class="cc-feat yes">✓ Blind spot</span>
+                <span class="cc-feat yes">✓ Sunroof</span>
+              </div>
+              <div class="cc-actions" id="claim-actions-1">
+                <button class="btn-deny" onclick="simDeny()">Pass</button>
+                <button class="btn-negotiate" onclick="simNegotiate()">Counter ↕</button>
+                <button class="btn-accept" onclick="simAccept()">Accept →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAITING CARD -->
+          <div class="claim-card open">
+            <div class="cc-head">
+              <div>
+                <div class="cc-dealer">Metro Toyota Group</div>
+                <div class="cc-vehicle">2024 Toyota RAV4 XSE AWD</div>
+                <div class="cc-meta">★ 4.6 · Verified dealer · 31 mi away</div>
+              </div>
+              <div class="cc-right">
+                <div class="cc-price" style="font-size:18px;color:var(--ink-muted);">Offer ready</div>
+                <div class="cc-price-sub">Waiting for claim window</div>
+              </div>
+            </div>
+            <div class="locked-banner">
+              🔒 &nbsp;This offer becomes available once the current claim window closes or you pass on Riverside Honda's offer.
+            </div>
+          </div>
+        </div>
+
+        <!-- DEALER CLAIM VIEW -->
+        <div id="cv-dealer" style="display:none;">
+          <div class="dealer-lead-card">
+            <div class="dlc-head">
+              <div>
+                <div class="dlc-req">Request #DR-4821 — New SUV, AWD</div>
+                <div class="dlc-sub">≤ $700/mo · Lease or finance · ASAP timeline · Within 50 mi</div>
+              </div>
+              <div class="dlc-match">
+                <div class="dlc-match-num">97%</div>
+                <div class="dlc-match-lbl">inventory match</div>
+              </div>
+            </div>
+            <div class="dlc-body">
+              <div class="dlc-info">
+                Needs: SUV, new, AWD, Apple CarPlay, heated seats, sunroof preferred. Has trade-in (2019 CR-V). Prefers dark exterior. Two-week buying window. Notes: open to 72-month financing.
+              </div>
+              <div class="dlc-score-badge great">👍 Highly responsive</div>
+            </div>
+            <div class="dlc-foot">
+              <div class="dlc-foot-info">Responded to 5 of 5 previous claims · Avg. response time: 3.2 hrs</div>
+              <button class="btn-claim-lead" id="dealer-claim-btn" onclick="dealerClaim()">Claim this lead →</button>
+            </div>
+          </div>
+
+          <div class="dealer-lead-card" style="opacity:0.7;">
+            <div class="dlc-head">
+              <div>
+                <div class="dlc-req">Request #DR-4809 — CPO Sedan</div>
+                <div class="dlc-sub">≤ $450/mo · Finance only · 1–3 months · Within 25 mi</div>
+              </div>
+              <div class="dlc-match">
+                <div class="dlc-match-num">88%</div>
+                <div class="dlc-match-lbl">inventory match</div>
+              </div>
+            </div>
+            <div class="dlc-body">
+              <div class="dlc-info">First-time buyer. Wants CPO sedan, heated seats, blind spot monitoring. Budget is firm. No trade-in.</div>
+              <div class="dlc-score-badge fair">⚠ Fair — 3 of 5 responded</div>
+            </div>
+            <div class="dlc-foot">
+              <div class="dlc-foot-info">Missed 2 claim windows · Avg. response time: 11.4 hrs</div>
+              <button class="btn-claim-lead">Claim this lead →</button>
+            </div>
+          </div>
+
+          <div class="dealer-lead-card" style="opacity:0.55;">
+            <div class="dlc-head">
+              <div>
+                <div class="dlc-req">Request #DR-4791 — New EV SUV</div>
+                <div class="dlc-sub">≤ $600/mo · Lease · 3–6 months · Within 50 mi</div>
+              </div>
+              <div class="dlc-match">
+                <div class="dlc-match-num">79%</div>
+                <div class="dlc-match-lbl">inventory match</div>
+              </div>
+            </div>
+            <div class="dlc-body">
+              <div class="dlc-info">Interested in EV or hybrid, has home charging, flexible timeline. Wants tax credit info.</div>
+              <div class="dlc-score-badge poor">⚠ Low — 1 of 4 responded</div>
+            </div>
+            <div class="dlc-foot">
+              <div class="dlc-foot-info">Missed 3 claim windows · Proceed with caution</div>
+              <button class="btn-claim-lead locked" disabled>Low responsiveness</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN 3: RESPONSIVENESS SCORE ═══ -->
+<div id="score" class="screen">
+  <div class="score-page">
+    <div class="page-hero">
+      <div class="page-eyebrow">Buyer accountability</div>
+      <h1>Your responsiveness score</h1>
+      <p>Your score reflects how reliably you respond to dealer claims. It's visible to dealers before they invest time in your request — and rewards serious buyers with more attention.</p>
+    </div>
+
+    <div class="rules-grid">
+      <div class="rule-card">
+        <div class="rule-icon">✅</div>
+        <div class="rule-title">What counts in your favor</div>
+        <div class="rule-desc">Responding within the 24-hour window (accept, negotiate, or deny) always counts positively — even if you pass on the offer. Active engagement is what matters.</div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-icon">⏰</div>
+        <div class="rule-title">What hurts your score</div>
+        <div class="rule-desc">Letting the clock expire without any response is the only thing that negatively affects your score. Denying offers does not count against you — only silence does.</div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-icon">🔒</div>
+        <div class="rule-title">Clock pauses fairly</div>
+        <div class="rule-desc">If a dealer goes quiet mid-negotiation, your countdown pauses automatically. You won't be penalized for the dealer's slow response.</div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-icon">📈</div>
+        <div class="rule-title">Score recovers over time</div>
+        <div class="rule-desc">A missed window has less impact as you build a longer history of positive responses. New users start with a neutral score — no penalty for being new.</div>
+      </div>
+    </div>
+
+    <div class="score-overview">
+      <div class="score-hero-card">
+        <div class="score-ring great">
+          <div class="score-num">94</div>
+          <div class="score-denom">/100</div>
+        </div>
+        <div class="score-label" style="color:var(--success);">Highly responsive</div>
+        <div class="score-sub">Dealers see this score and are significantly more likely to invest time in your request. Keep it up.</div>
+      </div>
+      <div class="score-breakdown">
+        <div class="sb-title">Score breakdown</div>
+        <div class="sb-row">
+          <div class="sb-label">Response rate</div>
+          <div class="sb-bar-track"><div class="sb-bar-fill great" style="width:100%"></div></div>
+          <div class="sb-val" style="color:var(--success);">6/6</div>
+        </div>
+        <div class="sb-row">
+          <div class="sb-label">Avg. response time</div>
+          <div class="sb-bar-track"><div class="sb-bar-fill great" style="width:88%"></div></div>
+          <div class="sb-val" style="color:var(--success);">3.2h</div>
+        </div>
+        <div class="sb-row">
+          <div class="sb-label">Windows expired</div>
+          <div class="sb-bar-track"><div class="sb-bar-fill great" style="width:6%"></div></div>
+          <div class="sb-val" style="color:var(--success);">0</div>
+        </div>
+        <div class="sb-row">
+          <div class="sb-label">Offers denied</div>
+          <div class="sb-bar-track"><div class="sb-bar-fill fair" style="width:33%"></div></div>
+          <div class="sb-val" style="color:var(--ink-muted);">2</div>
+        </div>
+        <div style="margin-top:14px;padding:12px;background:var(--cream);border-radius:var(--r-sm);font-size:12px;color:var(--ink-muted);">
+          Denying offers <strong style="color:var(--ink);">does not</strong> affect your score. Only unanswered windows count against you.
+        </div>
+      </div>
+    </div>
+
+    <!-- WHAT DEALERS SEE -->
+    <div class="dealer-sees">
+      <div class="ds-title">What dealers see on your request listing</div>
+      <div class="ds-lead-preview">
+        <div class="ds-preview-row">
+          <div class="ds-req-title">New SUV · AWD · ≤$700/mo · ASAP</div>
+          <div class="responsiveness-badge great">👍 94 — Highly responsive</div>
+        </div>
+        <div class="ds-chips">
+          <span class="ds-chip">Within 50 mi</span>
+          <span class="ds-chip">Lease or finance</span>
+          <span class="ds-chip">Apple CarPlay</span>
+          <span class="ds-chip">Heated seats</span>
+          <span class="ds-chip">Trade-in available</span>
+        </div>
+        <div class="ds-note">Responded to all 6 previous claims · Average response time 3.2 hours · 0 expired windows</div>
+      </div>
+    </div>
+
+    <!-- CLAIM HISTORY -->
+    <div class="history-card">
+      <div class="history-head">
+        <div class="history-head-title">Claim response history</div>
+        <div style="font-size:13px;color:var(--ink-muted);">Last 90 days</div>
+      </div>
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Dealer</th>
+            <th>Vehicle offered</th>
+            <th>Responded in</th>
+            <th>Outcome</th>
+            <th>Score impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Riverside Honda</strong></td>
+            <td>2025 Pilot TrailSport AWD</td>
+            <td>2.1 hrs</td>
+            <td><span class="outcome-pill pending">Active negotiation</span></td>
+            <td style="color:var(--success);font-weight:600;">+</td>
+          </tr>
+          <tr>
+            <td>Metro Toyota</td>
+            <td>2024 RAV4 XSE AWD</td>
+            <td>4.8 hrs</td>
+            <td><span class="outcome-pill negotiated">Countered</span></td>
+            <td style="color:var(--success);font-weight:600;">+</td>
+          </tr>
+          <tr>
+            <td>Valley Nissan</td>
+            <td>2025 Pathfinder SL AWD</td>
+            <td>1.4 hrs</td>
+            <td><span class="outcome-pill denied">Passed</span><div class="counts-toward">Doesn't count against score</div></td>
+            <td style="color:var(--ink-muted);">None</td>
+          </tr>
+          <tr>
+            <td>Empire Subaru</td>
+            <td>2024 Outback Onyx XT AWD</td>
+            <td>6.2 hrs</td>
+            <td><span class="outcome-pill denied">Passed</span><div class="counts-toward">Doesn't count against score</div></td>
+            <td style="color:var(--ink-muted);">None</td>
+          </tr>
+          <tr>
+            <td>Riverside Honda</td>
+            <td>2024 CR-V Sport AWD</td>
+            <td>3.3 hrs</td>
+            <td><span class="outcome-pill accepted">Accepted</span></td>
+            <td style="color:var(--success);font-weight:600;">+</td>
+          </tr>
+          <tr>
+            <td>Albany Ford</td>
+            <td>2024 Explorer ST-Line 4WD</td>
+            <td>5.1 hrs</td>
+            <td><span class="outcome-pill denied">Passed</span><div class="counts-toward">Doesn't count against score</div></td>
+            <td style="color:var(--ink-muted);">None</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SCORE BANDS -->
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;">
+      <div style="padding:16px 22px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-muted);">Score bands &amp; what they mean to dealers</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;">
+        <div style="padding:20px 22px;border-right:1px solid var(--border);">
+          <div style="font-size:18px;font-weight:700;color:var(--success);margin-bottom:4px;">80–100 · Highly responsive</div>
+          <div style="font-size:13px;color:var(--ink-muted);line-height:1.6;">Dealers are significantly more likely to claim and invest in a strong offer. Request gets priority visibility in dealer dashboards.</div>
+        </div>
+        <div style="padding:20px 22px;border-right:1px solid var(--border);">
+          <div style="font-size:18px;font-weight:700;color:var(--gold);margin-bottom:4px;">50–79 · Fair</div>
+          <div style="font-size:13px;color:var(--ink-muted);line-height:1.6;">Dealers will still engage but may deprioritize your request in favor of higher-scoring buyers. Improve by responding promptly to open claims.</div>
+        </div>
+        <div style="padding:20px 22px;">
+          <div style="font-size:18px;font-weight:700;color:var(--danger);margin-bottom:4px;">Below 50 · Low</div>
+          <div style="font-size:13px;color:var(--ink-muted);line-height:1.6;">Dealers are notified and may choose not to claim. Some lead slots may be restricted until responsiveness improves over time.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DENY MODAL -->
+<div class="modal-overlay" id="deny-modal">
+  <div class="modal-box">
+    <h3>Pass on this offer?</h3>
+    <p>Passing does not affect your responsiveness score. Let the dealer know why so they — and future dealers — can learn from it.</p>
+    <div class="modal-options">
+      <div class="modal-opt" onclick="confirmDeny('Price is above my budget')">💰 Price is above my budget</div>
+      <div class="modal-opt" onclick="confirmDeny('Missing a feature I need')">⚙️ Missing a feature I need</div>
+      <div class="modal-opt" onclick="confirmDeny('Went with a different dealer')">✓ Went with a different dealer</div>
+      <div class="modal-opt" onclick="confirmDeny('Just browsing for now')">👀 Just browsing for now</div>
+      <div class="modal-opt danger" onclick="confirmDeny('No reason provided')">Skip — no reason</div>
+    </div>
+    <button class="modal-cancel" onclick="closeModal('deny-modal')">Cancel — keep reviewing</button>
+  </div>
+</div>
+
+<!-- COUNTER MODAL -->
+<div class="modal-overlay" id="counter-modal">
+  <div class="modal-box">
+    <h3>Send a counter offer</h3>
+    <p>Propose your preferred terms. The dealer will see this and can accept, counter again, or withdraw. This counts positively toward your responsiveness score.</p>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted);margin-bottom:8px;">Your target monthly</div>
+      <input style="width:100%;padding:12px 16px;border:1.5px solid var(--border-med);border-radius:var(--r-sm);font-size:18px;font-weight:600;font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--cream);outline:none;" type="text" value="$635/mo">
+    </div>
+    <div style="margin-bottom:20px;">
+      <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted);margin-bottom:8px;">Note to dealer (optional)</div>
+      <textarea style="width:100%;padding:10px 14px;border:1.5px solid var(--border-med);border-radius:var(--r-sm);font-size:14px;font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--cream);outline:none;resize:none;min-height:72px;" placeholder="e.g. I love the Pilot but need to stay closer to $635. Happy to discuss term or down payment to get there."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button style="flex:1;padding:12px;background:var(--cream-dark);border:none;border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;" onclick="closeModal('counter-modal')">Cancel</button>
+      <button style="flex:2;padding:12px;background:var(--ink);color:var(--cream);border:none;border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;" onclick="confirmCounter()">Send counter →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showUnlockModal() { document.getElementById('unlock-modal').classList.add('open'); }
+  function confirmUnlock() {
+    closeModal('unlock-modal');
+    const btn = document.querySelector('.tier-btn.member');
+    btn.textContent = '✓ Unlocked for this purchase';
+    btn.style.background = 'var(--success)';
+    btn.disabled = true;
+  }
+
+  function showScreen(id, btn) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function claimView(view, btn) {
+    document.querySelectorAll('.cd-vt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('cv-customer').style.display = view === 'customer' ? 'block' : 'none';
+    document.getElementById('cv-dealer').style.display = view === 'dealer' ? 'block' : 'none';
+  }
+
+  // COUNTDOWN SIMULATION
+  let seconds = 67327; // ~18h 42m
+  let timerInterval = setInterval(tick, 1000);
+  let extended = false;
+  let paused = false;
+
+  function tick() {
+    if (paused || seconds <= 0) return;
+    seconds--;
+    updateClock();
+  }
+
+  function updateClock() {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    const str = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    const el = document.getElementById('cd-clock');
+    if (el) el.textContent = str;
+    const pct = Math.min(100, (seconds / 86400) * 100);
+    const fill = document.getElementById('cd-fill');
+    if (fill) fill.style.width = pct + '%';
+  }
+
+  function simAccept() {
+    clearInterval(timerInterval);
+    const card = document.getElementById('claim-card-1');
+    card.classList.remove('active-claim'); card.classList.add('accepted');
+    document.getElementById('countdown-bar').remove();
+    document.getElementById('claim-actions-1').innerHTML = '<div class="status-tag accepted">✅ Offer accepted — messaging now open</div>';
+    card.querySelector('.cc-head').style.borderBottom = '1px solid var(--success)';
+  }
+
+  function simDeny() { document.getElementById('deny-modal').classList.add('open'); }
+  function confirmDeny(reason) {
+    closeModal('deny-modal');
+    clearInterval(timerInterval);
+    const card = document.getElementById('claim-card-1');
+    card.classList.remove('active-claim'); card.classList.add('denied');
+    document.getElementById('countdown-bar').style.display = 'none';
+    document.getElementById('claim-actions-1').innerHTML = '<div class="status-tag denied">✗ Passed · Next dealer can now claim · Score unaffected</div>';
+  }
+
+  function simNegotiate() { document.getElementById('counter-modal').classList.add('open'); }
+  function confirmCounter() {
+    closeModal('counter-modal');
+    clearInterval(timerInterval);
+    paused = true;
+    document.getElementById('cd-clock').textContent = '⏸ Paused';
+    document.getElementById('cd-fill').style.background = 'var(--blue)';
+    document.querySelector('.cd-bar-label').textContent = 'Clock paused — waiting for dealer response to your counter offer';
+    document.getElementById('countdown-bar').style.background = 'var(--blue-light)';
+    document.getElementById('claim-actions-1').innerHTML = '<div class="status-tag waiting">↕ Counter sent — awaiting dealer response</div>';
+  }
+
+  function simExtend() {
+    if (extended) return;
+    extended = true;
+    seconds += 86400;
+    document.getElementById('extend-btn').textContent = 'Extended ✓';
+    document.getElementById('extend-btn').classList.add('used');
+    updateClock();
+  }
+
+  function simExpire() {
+    clearInterval(timerInterval);
+    seconds = 0;
+    document.getElementById('cd-clock').textContent = '00:00:00';
+    document.getElementById('cd-fill').style.width = '0%';
+    document.getElementById('cd-fill').style.background = 'var(--danger)';
+    document.getElementById('countdown-bar').style.background = 'var(--danger-light)';
+    document.querySelector('.cd-bar-label').textContent = '⚠ Window expired — next dealer can now claim · This will affect your score';
+    document.getElementById('claim-actions-1').innerHTML = '<div class="status-tag expired">⚠ Window expired — responsiveness score affected</div>';
+    document.getElementById('claim-card-1').classList.remove('active-claim');
+    document.getElementById('claim-card-1').style.borderColor = 'var(--danger)';
+  }
+
+  function simReset() {
+    clearInterval(timerInterval);
+    seconds = 67327; extended = false; paused = false;
+    const card = document.getElementById('claim-card-1');
+    card.className = 'claim-card active-claim';
+    card.style.borderColor = '';
+    if (!document.getElementById('countdown-bar')) {
+      // re-render would need full reload; just reload
+      location.reload();
+      return;
+    }
+    document.getElementById('countdown-bar').style.display = 'flex';
+    document.getElementById('countdown-bar').style.background = 'var(--warning-light)';
+    document.querySelector('.cd-bar-label').textContent = 'Time remaining to respond · Clock pauses if dealer goes quiet';
+    document.getElementById('cd-fill').style.background = 'var(--warning)';
+    document.getElementById('extend-btn').textContent = '+24hrs once';
+    document.getElementById('extend-btn').classList.remove('used');
+    document.getElementById('claim-actions-1').innerHTML = `
+      <button class="btn-deny" onclick="simDeny()">Pass</button>
+      <button class="btn-negotiate" onclick="simNegotiate()">Counter ↕</button>
+      <button class="btn-accept" onclick="simAccept()">Accept →</button>
+    `;
+    updateClock();
+    timerInterval = setInterval(tick, 1000);
+  }
+
+  function dealerClaim() {
+    const btn = document.getElementById('dealer-claim-btn');
+    btn.textContent = 'Lead claimed ✓';
+    btn.classList.add('claimed');
+  }
+
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+</script>
+</body>
+</html>
